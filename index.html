@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Studio Pro - Édition Emoji Deluxe</title>
+    <script type="text/javascript" src="https://unpkg.com/qr-code-styling@1.5.0/lib/qr-code-styling.js"></script>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --bg-main: #f1f5f9;
+            --sidebar-bg: #ffffff;
+            --text-main: #1e293b;
+            --border: #e2e8f0;
+            --accent: #10b981;
+            --danger: #ef4444;
+            --info: #0ea5e9;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebars */
+        .sidebar {
+            width: 350px;
+            background: var(--sidebar-bg);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            padding: 1.25rem;
+        }
+
+        .sidebar-right {
+            width: 300px;
+            border-right: none;
+            border-left: 1px solid var(--border);
+        }
+
+        /* Central */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+            background-size: 20px 20px;
+            overflow-y: auto;
+        }
+
+        .logo-area {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748b;
+            margin: 1.25rem 0 0.75rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0.4rem;
+        }
+
+        /* Inputs */
+        .field { margin-bottom: 1rem; }
+        label { display: block; font-size: 0.75rem; font-weight: 700; margin-bottom: 0.4rem; color: #475569; }
+        
+        input[type="text"], input[type="number"], textarea, select {
+            width: 100%;
+            padding: 0.6rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            background: #fdfdfd;
+        }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+
+        .color-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #f8fafc;
+            padding: 4px 8px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+        input[type="color"] { border: none; width: 24px; height: 24px; cursor: pointer; background: none; padding: 0;}
+
+        /* Canvas */
+        #canvas-container {
+            background: white;
+            padding: 1rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+
+        /* Buttons */
+        .btn {
+            width: 100%;
+            padding: 0.7rem;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+            margin-bottom: 8px;
+        }
+
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-success { background: var(--accent); color: white; }
+        .btn-info { background: var(--info); color: white; }
+        .btn-outline { background: white; border: 1px solid var(--border); color: var(--text-main); }
+        .btn-danger { background: #fef2f2; color: var(--danger); border: 1px solid #fee2e2; }
+
+        /* Emoji System */
+        .emoji-category-label {
+            font-size: 0.65rem;
+            color: #94a3b8;
+            margin-bottom: 5px;
+            margin-top: 10px;
+        }
+        .emoji-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 6px;
+            margin-bottom: 5px;
+        }
+        .emoji-item {
+            cursor: pointer;
+            text-align: center;
+            padding: 8px 4px;
+            background: #f1f5f9;
+            border-radius: 6px;
+            font-size: 1.2rem;
+            transition: transform 0.1s, background 0.2s;
+        }
+        .emoji-item:hover {
+            background: #e2e8f0;
+            transform: scale(1.1);
+        }
+
+        .history-item {
+            padding: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .history-item:hover { background: #f1f5f9; }
+
+        /* Notification Toast */
+        #toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #1e293b;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            display: none;
+            z-index: 1000;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        #file-input { display: none; }
+    </style>
+</head>
+<body>
+
+    <div id="toast">Message copié !</div>
+
+    <aside class="sidebar">
+        <div class="logo-area"><span>💎</span> QR Studio Pro</div>
+
+        <div class="section-title">1. Contenu</div>
+        <div class="field">
+            <textarea id="qr-data" rows="2" placeholder="URL, Texte, Mail...">https://google.com</textarea>
+        </div>
+
+        <div class="section-title">2. Style & Dégradé</div>
+        <div class="field">
+            <label>Forme des points</label>
+            <select id="dot-type">
+                <option value="square">Carré</option>
+                <option value="rounded">Arrondi</option>
+                <option value="dots" selected>Points</option>
+                <option value="classy">Classique</option>
+                <option value="extra-rounded">Ultra Arrondi</option>
+            </select>
+        </div>
+        <div class="grid-2">
+            <div class="field">
+                <label>Couleur 1</label>
+                <div class="color-wrapper"><input type="color" id="dot-color-1" value="#6366f1"></div>
+            </div>
+            <div class="field">
+                <label>Couleur 2 (Optionnel)</label>
+                <div class="color-wrapper"><input type="color" id="dot-color-2" value="#6366f1"></div>
+            </div>
+        </div>
+
+        <div class="section-title">3. Coins & Erreur</div>
+        <div class="grid-2">
+            <div class="field">
+                <label>Style Coin</label>
+                <select id="eye-type">
+                    <option value="square">Carré</option>
+                    <option value="extra-rounded" selected>Arrondi</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Niveau Correction</label>
+                <select id="error-level">
+                    <option value="L">L (7%)</option>
+                    <option value="M">M (15%)</option>
+                    <option value="Q">Q (25%)</option>
+                    <option value="H" selected>H (30% - Recommandé)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="section-title">4. Logo & Emojis</div>
+        <div class="field">
+            <button class="btn btn-outline" onclick="document.getElementById('file-input').click()">📂 Charger image PC</button>
+            <input type="file" id="file-input" accept="image/*">
+        </div>
+        
+        <div class="emoji-container">
+            <div class="emoji-category-label">Populaires</div>
+            <div class="emoji-grid">
+                <span class="emoji-item">❤️</span><span class="emoji-item">🔥</span><span class="emoji-item">✅</span><span class="emoji-item">🚀</span><span class="emoji-item">📱</span><span class="emoji-item">⭐️</span>
+            </div>
+            <div class="emoji-category-label">Social & Tech</div>
+            <div class="emoji-grid">
+                <span class="emoji-item">👍</span><span class="emoji-item">📸</span><span class="emoji-item">👻</span><span class="emoji-item">🐦</span><span class="emoji-item">🎥</span><span class="emoji-item">📡</span>
+            </div>
+            <div class="emoji-category-label">Business & Symboles</div>
+            <div class="emoji-grid">
+                <span class="emoji-item">🛒</span><span class="emoji-item">💳</span><span class="emoji-item">📍</span><span class="emoji-item">📞</span><span class="emoji-item">📧</span><span class="emoji-item">🎁</span>
+                <span class="emoji-item">💰</span><span class="emoji-item">📈</span><span class="emoji-item">💡</span><span class="emoji-item">🔍</span><span class="emoji-item">☕️</span><span class="emoji-item">🍕</span>
+            </div>
+        </div>
+        
+        <button id="remove-logo-btn" class="btn btn-danger" onclick="removeLogo()" style="display:none; margin-top: 10px;">🗑️ Supprimer le logo</button>
+
+        <div class="section-title">5. Avancé</div>
+        <div class="grid-2">
+            <div class="field">
+                <label>Marge (Padding)</label>
+                <input type="number" id="qr-margin" value="10" min="0" max="50">
+            </div>
+            <div class="field">
+                <label>Taille (px)</label>
+                <input type="number" id="qr-size" value="300" step="50">
+            </div>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <div id="canvas-container"></div>
+        <p style="margin-top:20px; color: #94a3b8; font-size: 0.8rem;">Aperçu haute fidélité</p>
+    </main>
+
+    <aside class="sidebar sidebar-right">
+        <div class="section-title">Exportation Pro</div>
+        <button class="btn btn-primary" onclick="downloadQR('png')">🖼️ Télécharger PNG</button>
+        <button class="btn btn-success" onclick="downloadQR('svg')">📐 Télécharger SVG (Vectoriel)</button>
+        <button id="share-btn" class="btn btn-info" onclick="shareQR()">🔗 Partager le QR</button>
+        <button class="btn btn-outline" onclick="copyToClipboard()">📋 Copier l'image</button>
+
+        <div class="section-title">Historique</div>
+        <div id="history-list"></div>
+
+        <div class="section-title">Conseils indispensables</div>
+        <div style="font-size: 0.75rem; color: #64748b; line-height: 1.5; background: #f8fafc; padding: 10px; border-radius: 8px;">
+            • Utilisez le <strong>Niveau H</strong> si votre logo est grand.<br>
+            • Le <strong>SVG</strong> est le format requis pour l'imprimerie professionnelle.<br>
+            • Évitez les dégradés trop clairs sur fond blanc.
+        </div>
+    </aside>
+
+    <script>
+        let qrCode;
+        const history = [];
+        const toast = document.getElementById('toast');
+        
+        const config = {
+            data: document.getElementById('qr-data'),
+            dotType: document.getElementById('dot-type'),
+            dotColor1: document.getElementById('dot-color-1'),
+            dotColor2: document.getElementById('dot-color-2'),
+            eyeType: document.getElementById('eye-type'),
+            errorLevel: document.getElementById('error-level'),
+            margin: document.getElementById('qr-margin'),
+            size: document.getElementById('qr-size'),
+            fileInput: document.getElementById('file-input')
+        };
+
+        let currentLogo = "";
+
+        function showToast(message) {
+            toast.innerText = message;
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 2500);
+        }
+
+        function initQR() {
+            qrCode = new QRCodeStyling({
+                width: parseInt(config.size.value),
+                height: parseInt(config.size.value),
+                type: "svg",
+                data: config.data.value,
+                image: currentLogo,
+                margin: parseInt(config.margin.value),
+                qrOptions: { errorCorrectionLevel: config.errorLevel.value },
+                dotsOptions: {
+                    type: config.dotType.value,
+                    gradient: getGradient()
+                },
+                backgroundOptions: { color: "#ffffff" },
+                imageOptions: { crossOrigin: "anonymous", margin: 5, imageSize: 0.4 },
+                cornersSquareOptions: { type: config.eyeType.value, color: config.dotColor1.value }
+            });
+            qrCode.append(document.getElementById("canvas-container"));
+        }
+
+        function getGradient() {
+            if (config.dotColor1.value === config.dotColor2.value) {
+                return null;
+            }
+            return {
+                type: "linear",
+                rotation: 45,
+                colorStops: [
+                    { offset: 0, color: config.dotColor1.value },
+                    { offset: 1, color: config.dotColor2.value }
+                ]
+            };
+        }
+
+        function updateQR() {
+            const grad = getGradient();
+            qrCode.update({
+                data: config.data.value || " ",
+                width: parseInt(config.size.value),
+                height: parseInt(config.size.value),
+                image: currentLogo,
+                margin: parseInt(config.margin.value),
+                qrOptions: { errorCorrectionLevel: config.errorLevel.value },
+                dotsOptions: {
+                    type: config.dotType.value,
+                    color: grad ? undefined : config.dotColor1.value,
+                    gradient: grad
+                },
+                cornersSquareOptions: { 
+                    type: config.eyeType.value,
+                    color: config.dotColor1.value
+                }
+            });
+            
+            document.getElementById('remove-logo-btn').style.display = currentLogo ? 'flex' : 'none';
+            addToHistory(config.data.value);
+        }
+
+        function removeLogo() {
+            currentLogo = "";
+            config.fileInput.value = "";
+            updateQR();
+        }
+
+        config.fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    currentLogo = event.target.result;
+                    updateQR();
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        document.querySelectorAll('.emoji-item').forEach(emoji => {
+            emoji.addEventListener('click', () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = 200; canvas.height = 200;
+                const ctx = canvas.getContext('2d');
+                ctx.font = '140px serif';
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillText(emoji.innerText, 100, 110);
+                currentLogo = canvas.toDataURL();
+                updateQR();
+            });
+        });
+
+        function addToHistory(text) {
+            if(!text || history.includes(text)) return;
+            history.unshift(text);
+            if(history.length > 8) history.pop();
+            const container = document.getElementById('history-list');
+            container.innerHTML = history.map(item => `
+                <div class="history-item" onclick="document.getElementById('qr-data').value='${item}';updateQR();">
+                    🔗 ${item}
+                </div>
+            `).join('');
+        }
+
+        async function copyToClipboard() {
+            const blob = await qrCode.getRawData("png");
+            try {
+                const item = new ClipboardItem({ "image/png": blob });
+                await navigator.clipboard.write([item]);
+                showToast("Image copiée !");
+            } catch (err) {
+                console.error("Erreur de copie : ", err);
+                showToast("Erreur de copie");
+            }
+        }
+
+        async function shareQR() {
+            try {
+                const blob = await qrCode.getRawData("png");
+                const file = new File([blob], "qrcode.png", { type: "image/png" });
+                
+                if (navigator.share) {
+                    await navigator.share({
+                        title: 'Mon QR Code',
+                        text: 'Voici le QR Code généré avec QR Studio Pro : ' + config.data.value,
+                        files: [file],
+                    });
+                } else {
+                    await navigator.clipboard.writeText(config.data.value);
+                    showToast("Lien copié (Partage non supporté)");
+                }
+            } catch (err) {
+                console.error("Partage annulé ou échoué", err);
+            }
+        }
+
+        function downloadQR(ext) {
+            const name = "qr_" + (config.data.value.replace(/[^a-z0-9]/gi, '_').substring(0, 15) || "code");
+            qrCode.download({ name: name, extension: ext });
+        }
+
+        [config.data, config.dotType, config.dotColor1, config.dotColor2, config.eyeType, config.errorLevel, config.margin, config.size].forEach(el => {
+            el.addEventListener('input', updateQR);
+        });
+
+        window.onload = initQR;
+    </script>
+</body>
+</html>
